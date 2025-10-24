@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="app">
-        <!-- (HTML content is unchanged) -->
+        <!-- HTML content is unchanged -->
         <header>
             <h1>PMP 문제 풀이</h1>
             <nav>
@@ -34,8 +34,7 @@
 
     <!-- SCRIPT LOADING ORDER FIX -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
-    <script src="script.js"></script> <!-- Our script is loaded first -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script src="script.js"></script> 
+    <!-- Google API scripts will now be loaded dynamically by script.js -->
 </body>
 </html>

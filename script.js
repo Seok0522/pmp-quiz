@@ -1,24 +1,3 @@
-// Global functions for Google API callbacks
-function gapiLoaded() {
-    gapi.load('client', initializeGapiClient);
-}
-
-function gisLoaded() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: (tokenResponse) => {
-            if (tokenResponse.access_token) {
-                updateSigninStatus(true);
-                fetchNotes();
-            }
-        },
-    });
-    gisInited = true;
-    maybeEnableButtons();
-}
-
-
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const quizContainer = document.getElementById('quiz-container');
@@ -36,13 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const retakeBtn = document.getElementById('retake-btn');
 
     // State
-    let allQuestions = [];
-    let incorrectNotes = [];
-    let currentQuestionSet = [];
-    let currentQuestionIndex = 0;
-    let selectedAnswer = null;
-    let isSubmitted = false;
-    let incorrectNotesFileId = null;
+    let allQuestions = [], incorrectNotes = [], currentQuestionSet = [];
+    let currentQuestionIndex = 0, selectedAnswer = null, isSubmitted = false, incorrectNotesFileId = null;
 
     // Google API Integration
     const CLIENT_ID = '708764095382-ni69bvdt5tjcabl3homj4m0ubl5lgn6q.apps.googleusercontent.com';
@@ -51,6 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let tokenClient;
     let gapiInited = false;
     let gisInited = false;
+
+    function gapiLoaded() {
+        gapi.load('client', initializeGapiClient);
+    }
+
+    function gisLoaded() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                if (tokenResponse.access_token) {
+                    updateSigninStatus(true);
+                    fetchNotes();
+                }
+            },
+        });
+        gisInited = true;
+        maybeEnableButtons();
+    }
 
     function initializeGapiClient() {
         gapi.client.init({
@@ -89,35 +82,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function getNotesFileId() {
         if (incorrectNotesFileId) return incorrectNotesFileId;
-        try {
-            const response = await gapi.client.drive.files.list({
-                spaces: 'appDataFolder',
-                fields: 'files(id, name)',
-                q: `name='${NOTES_FILE_NAME}'`
-            });
-            if (response.result.files.length > 0) {
-                incorrectNotesFileId = response.result.files[0].id;
-                return incorrectNotesFileId;
-            }
-            return null;
-        } catch (err) { console.error("Error getting file ID:", err); return null; }
+        const response = await gapi.client.drive.files.list({
+            spaces: 'appDataFolder', fields: 'files(id, name)', q: `name='${NOTES_FILE_NAME}'`
+        });
+        if (response.result.files.length > 0) return incorrectNotesFileId = response.result.files[0].id;
+        return null;
     }
 
     async function updateNotesOnDrive(notes) {
         const fileId = await getNotesFileId();
-        const boundary = '-------314159265358979323846';
-        const delimiter = `\r\n--${boundary}\r\n`;
-        const close_delim = `\r\n--${boundary}--`;
+        const boundary = '-------314159265358979323846', delimiter = `\r\n--${boundary}\r\n`, close_delim = `\r\n--${boundary}--`;
         const metadata = { name: NOTES_FILE_NAME, mimeType: 'application/json' };
         const multipartRequestBody = `${delimiter}Content-Type: application/json\r\n\r\n${JSON.stringify(metadata)}${delimiter}Content-Type: application/json\r\n\r\n${JSON.stringify(notes)}${close_delim}`;
         const request = gapi.client.request({
-            path: `/upload/drive/v3/files/${fileId || ''}`,
-            method: fileId ? 'PATCH' : 'POST',
-            params: { uploadType: 'multipart' },
-            headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
+            path: `/upload/drive/v3/files/${fileId || ''}`, method: fileId ? 'PATCH' : 'POST',
+            params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
             body: multipartRequestBody
         });
-        return new Promise((resolve, reject) => request.execute(file => file.id ? resolve(incorrectNotesFileId = file.id) : reject('File update failed')));
+        return new Promise(resolve => request.execute(file => resolve(incorrectNotesFileId = file.id)));
     }
 
     async function saveIncorrectAnswer(question) {
@@ -136,34 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchNotes() {
         const fileId = await getNotesFileId();
         if (!fileId) return incorrectNotes = [];
-        try {
-            const response = await gapi.client.drive.files.get({ fileId, alt: 'media' });
-            return incorrectNotes = JSON.parse(response.body || '[]');
-        } catch (e) { console.error("Error fetching notes:", e); return []; }
+        const response = await gapi.client.drive.files.get({ fileId, alt: 'media' });
+        return incorrectNotes = JSON.parse(response.body || '[]');
     }
 
     async function showNotesView() {
-        quizContainer.style.display = 'none';
-        notesContainer.style.display = 'block';
-        notesBtn.textContent = '퀴즈로 돌아가기';
-        notesBtn.onclick = () => {
-            currentQuestionSet = allQuestions;
-            currentQuestionIndex = 0;
-            displayQuestion(currentQuestionIndex);
-            showQuizView();
-        };
+        quizContainer.style.display = 'none'; notesContainer.style.display = 'block';
+        notesBtn.textContent = '퀴즈로 돌아가기'; notesBtn.onclick = () => { currentQuestionSet = allQuestions; currentQuestionIndex = 0; displayQuestion(currentQuestionIndex); showQuizView(); };
         notesListEl.innerHTML = '<em>로딩 중...</em>';
         const notes = await fetchNotes();
-        if (notes.length === 0) {
-            notesListEl.innerHTML = '<p>저장된 오답노트가 없습니다.</p>';
-            retakeBtn.style.display = 'none';
-            return;
-        }
-        retakeBtn.style.display = 'block';
-        notesListEl.innerHTML = '';
+        if (notes.length === 0) { notesListEl.innerHTML = '<p>저장된 오답노트가 없습니다.</p>'; retakeBtn.style.display = 'none'; return; }
+        retakeBtn.style.display = 'block'; notesListEl.innerHTML = '';
         notes.forEach(note => {
-            const noteEl = document.createElement('div');
-            noteEl.className = 'note-item';
+            const noteEl = document.createElement('div'); noteEl.className = 'note-item';
             noteEl.innerHTML = `<div><strong>문제 ${note.number}:</strong> ${note.question_ko.substring(0, 50)}...</div><button class="delete-btn" data-id="${note.number}">삭제</button>`;
             noteEl.querySelector('.delete-btn').addEventListener('click', e => {
                 const id = e.target.getAttribute('data-id');
@@ -175,17 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startRetakeQuiz() {
         if (incorrectNotes.length === 0) return alert('다시 풀 오답 문제가 없습니다.');
-        currentQuestionSet = incorrectNotes;
-        currentQuestionIndex = 0;
-        displayQuestion(currentQuestionIndex);
-        showQuizView();
+        currentQuestionSet = incorrectNotes; currentQuestionIndex = 0;
+        displayQuestion(currentQuestionIndex); showQuizView();
     }
 
     function showQuizView() {
-        notesContainer.style.display = 'none';
-        quizContainer.style.display = 'block';
-        notesBtn.textContent = '오답노트';
-        notesBtn.onclick = showNotesView;
+        notesContainer.style.display = 'none'; quizContainer.style.display = 'block';
+        notesBtn.textContent = '오답노트'; notesBtn.onclick = showNotesView;
     }
 
     async function loadQuestions() {
@@ -205,21 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayQuestion(index) {
-        if (index >= currentQuestionSet.length) {
-            quizContainer.innerHTML = `<h2>퀴즈가 종료되었습니다!</h2>`;
-            return;
-        }
+        if (index >= currentQuestionSet.length) { quizContainer.innerHTML = `<h2>퀴즈가 종료되었습니다!</h2>`; return; }
         const question = currentQuestionSet[index];
-        questionNumberEl.textContent = `문제 ${question.number}`;
-        questionEnEl.textContent = question.question_en;
-        questionKoEl.textContent = question.question_ko;
-        optionsContainer.innerHTML = '';
-        selectedAnswer = null;
-        isSubmitted = false;
+        questionNumberEl.textContent = `문제 ${question.number}`; questionEnEl.textContent = question.question_en; questionKoEl.textContent = question.question_ko;
+        optionsContainer.innerHTML = ''; selectedAnswer = null; isSubmitted = false;
         for (const [key, value] of Object.entries(question.options)) {
             if (value) {
-                const optionElement = document.createElement('div');
-                optionElement.dataset.key = key;
+                const optionElement = document.createElement('div'); optionElement.dataset.key = key;
                 optionElement.textContent = `${key}: ${value}`;
                 optionElement.addEventListener('click', () => {
                     if (isSubmitted) return;
@@ -230,37 +185,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionsContainer.appendChild(optionElement);
             }
         }
-        feedbackContainer.textContent = '';
-        explanationContainer.style.display = 'none';
+        feedbackContainer.textContent = ''; explanationContainer.style.display = 'none';
         submitBtn.textContent = '답안 제출';
     }
 
     submitBtn.addEventListener('click', () => {
-        if (isSubmitted) {
-            currentQuestionIndex++;
-            displayQuestion(currentQuestionIndex);
-            return;
-        }
+        if (isSubmitted) { currentQuestionIndex++; displayQuestion(currentQuestionIndex); return; }
         if (selectedAnswer === null) return alert('답을 선택해주세요.');
         const question = currentQuestionSet[currentQuestionIndex];
         isSubmitted = true;
         if (selectedAnswer === question.answer) {
-            feedbackContainer.textContent = '정답입니다!';
-            feedbackContainer.style.color = 'green';
+            feedbackContainer.textContent = '정답입니다!'; feedbackContainer.style.color = 'green';
         } else {
-            feedbackContainer.textContent = `오답입니다. (정답: ${question.answer})`;
-            feedbackContainer.style.color = 'red';
-            explanationContainer.innerHTML = `<strong>해설:</strong><br>${question.explanation}`;
-            explanationContainer.style.display = 'block';
+            feedbackContainer.textContent = `오답입니다. (정답: ${question.answer})`; feedbackContainer.style.color = 'red';
+            explanationContainer.innerHTML = `<strong>해설:</strong><br>${question.explanation}`; explanationContainer.style.display = 'block';
             if (gapi.client.getToken() !== null) saveIncorrectAnswer(question);
         }
         submitBtn.textContent = '다음 문제';
     });
 
-    // Initial Load Logic
+    // --- Initial Load Logic ---
     loginBtn.disabled = true;
     loginBtn.addEventListener('click', handleAuthClick);
     notesBtn.addEventListener('click', showNotesView);
     retakeBtn.addEventListener('click', startRetakeQuiz);
+    
+    // Dynamically load Google API scripts
+    const gapiScript = document.createElement('script');
+    gapiScript.src = 'https://apis.google.com/js/api.js';
+    gapiScript.onload = gapiLoaded;
+    document.body.appendChild(gapiScript);
+
+    const gisScript = document.createElement('script');
+    gisScript.src = 'https://accounts.google.com/gsi/client';
+    gisScript.onload = gisLoaded;
+    document.body.appendChild(gisScript);
+
     loadQuestions();
 });
