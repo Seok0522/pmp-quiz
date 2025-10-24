@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     notesBtn.addEventListener('click', showNotesView);
     retakeBtn.addEventListener('click', startRetakeQuiz);
     
-    // Dynamically load Google API scripts
+    // Dynamically load Google API scripts and assign callbacks
     const gapiScript = document.createElement('script');
     gapiScript.src = 'https://apis.google.com/js/api.js';
     gapiScript.onload = gapiLoaded;
