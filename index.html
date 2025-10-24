@@ -8,7 +8,6 @@
 </head>
 <body>
     <div id="app">
-        <!-- HTML content is unchanged -->
         <header>
             <h1>PMP 문제 풀이</h1>
             <nav>
@@ -17,15 +16,24 @@
             </nav>
         </header>
         <main id="quiz-container">
-            <!-- ... -->
+            <div id="question-number"></div>
+            <div id="question-en"></div>
+            <div id="question-ko"></div>
+            <div id="options-container"></div>
+            <button id="submit-btn">답안 제출</button>
+            <div id="feedback-container"></div>
+            <div id="explanation-container" style="display: none;"></div>
         </main>
         <aside id="notes-container" style="display: none;">
-            <!-- ... -->
+            <h2>나의 오답 노트</h2>
+            <button id="retake-btn">오답 문제 다시 풀기</button>
+            <div id="notes-list"></div>
         </aside>
     </div>
 
-    <!-- SCRIPT LOADING ORDER FIX -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script src="script.js"></script> 
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 </html>
