@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let incorrectNotesFileId = null;
 
     // --- Google API Integration ---
-    const CLIENT_ID = '708764095382-ni69bvdt5tjcabl3homj4m0ubl5lgn6q.apps.googleusercontent.com'; // Replace with your Client ID
+    // !! 중요 !!: 이전에 발급받으신 본인의 클라이언트 ID로 이 값을 교체해주세요.
+    const CLIENT_ID = '708764095382-ni69bvdt5tjcabl3homj4m0ubl5lgn6q.apps.googleusercontent.com'; 
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
     const NOTES_FILE_NAME = 'incorrect_notes.json';
     let tokenClient;
@@ -32,9 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Authorization
     function handleAuthClick() {
         if (gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({prompt: 'consent'});
+            // tokenClient가 초기화되었는지 확인
+            if (tokenClient) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                console.error("Google Auth client is not ready.");
+                alert("Google 인증이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+            }
         } else {
-            gapi.client.getToken(); // Revoke token
             gapi.client.setToken('');
             updateSigninStatus(false);
         }
@@ -102,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function saveIncorrectAnswer(question) {
-        // Optimistic update
         if (!incorrectNotes.some(note => note.number === question.number)) {
             incorrectNotes.push(question);
             await updateNotesOnDrive(incorrectNotes);
@@ -114,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         incorrectNotes = incorrectNotes.filter(note => note.number !== questionNumber);
         await updateNotesOnDrive(incorrectNotes);
         console.log(`문제 ${questionNumber} 삭제 완료`);
-        showNotesView(); // Refresh the view
+        showNotesView();
     }
 
     async function fetchNotes() {
@@ -139,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notesBtn.textContent = '퀴즈로 돌아가기';
         notesBtn.onclick = () => {
             currentQuestionSet = allQuestions;
-            currentQuestionIndex = 0; // Or last viewed question index
+            currentQuestionIndex = 0;
             displayQuestion(currentQuestionIndex);
             showQuizView();
         };
@@ -202,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     number: q['문제번호'], question_en: q['영문 문제'], question_ko: q['한국어 문제'],
                     options: { A: q.A, B: q.B, C: q.C, D: q.D }, answer: q['문제의 답'].trim(), explanation: q['해설']
                 }));
-                currentQuestionSet = allQuestions; // Default to all questions
+                currentQuestionSet = allQuestions;
                 if (currentQuestionSet.length > 0) displayQuestion(currentQuestionIndex);
                 else quizContainer.innerHTML = "<p>문제를 불러오지 못했습니다.</p>";
             }});
@@ -212,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayQuestion(index) {
         if (index >= currentQuestionSet.length) {
             quizContainer.innerHTML = `<h2>퀴즈가 종료되었습니다!</h2><p>${currentQuestionSet.length} 문제를 모두 푸셨습니다.</p>`;
-            // Add a button to go back to the main menu/notes
             const backBtn = document.createElement('button');
             backBtn.textContent = '메인으로 돌아가기';
             backBtn.onclick = () => {
@@ -278,14 +282,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Initial Load ---
-    function initializeGapiClient() { gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}); }
-    function gapiLoaded() { gapi.load('client', initializeGapiClient); }
-    function initializeGisClient() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: (tokenResponse) => { if (tokenResponse.access_token) { updateSigninStatus(true); fetchNotes(); } }, }); }
-    function gisLoaded() { google.accounts.oauth2.gis.load('client', initializeGisClient); }
+    function gapiLoaded() {
+        gapi.load('client', () => {
+            gapi.client.init({
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            });
+        });
+    }
+
+    function gisLoaded() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                if (tokenResponse.access_token) {
+                    updateSigninStatus(true);
+                    fetchNotes();
+                }
+            },
+        });
+    }
     
     loginBtn.addEventListener('click', handleAuthClick);
     retakeBtn.addEventListener('click', startRetakeQuiz);
     
+    // Load Google API scripts dynamically
     const gapiScript = document.createElement('script');
     gapiScript.src = 'https://apis.google.com/js/api.js';
     gapiScript.onload = gapiLoaded;
