@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let incorrectNotesFileId = null;
 
     // --- Google API Integration ---
-    const CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com'; // Replace with your Client ID
+    const CLIENT_ID = '708764095382-ni69bvdt5tjcabl3homj4m0ubl5lgn6q.apps.googleusercontent.com'; // Replace with your Client ID
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
     const NOTES_FILE_NAME = 'incorrect_notes.json';
     let tokenClient;
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Quiz Logic ---
     async function loadQuestions() {
         try {
-            const response = await fetch('pmp_engko_final_0.2.csv');
+            const response = await fetch('./pmp_engko_final_0.2.csv');
             const csvData = await response.text();
             Papa.parse(csvData, { header: true, skipEmptyLines: true, complete: (results) => {
                 allQuestions = results.data.map(q => ({
