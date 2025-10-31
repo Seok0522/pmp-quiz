@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMP 시험 학습</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PMP 모의고사</h1>
+        </header>
+
+        <!-- View Wrapper -->
+        <div id="view-wrapper">
+            <!-- Quiz View -->
+            <div id="quiz-view">
+                <main>
+                    <div class="quiz-container">
+                        <div class="question-header">
+                            <span id="question-number">문제 로딩 중...</span>
+                            <button id="toggle-english-btn">영문 보기</button>
+                        </div>
+                        <div class="question-content">
+                            <div id="korean-content">
+                                <p id="question-korean">문제를 불러오고 있습니다.</p>
+                            </div>
+                            <div id="english-content" class="hidden">
+                                <h3>English Version</h3>
+                                <div id="question-english"></div>
+                            </div>
+                        </div>
+                        <div id="answers" class="answers"></div>
+                        <button id="submit-btn" disabled>답안 제출</button>
+                        <div id="result-container" class="hidden">
+                            <p id="result-message"></p>
+                            <div id="explanation-container" class="hidden">
+                                <h3>해설</h3>
+                                <p id="explanation"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button id="prev-btn" disabled>이전 문제</button>
+                        <div class="jump-to">
+                            <input type="number" id="question-jump-input" placeholder="번호">
+                            <button id="jump-btn">이동</button>
+                        </div>
+                        <button id="next-btn" disabled>다음 문제</button>
+                    </div>
+                    <div class="extra-features">
+                        <button id="view-incorrect-btn">오답노트 보기</button>
+                        <button id="concept-btn">개념 학습하기</button>
+                    </div>
+                    <div id="gemini-container" class="hidden">
+                        <h2>관련 개념 설명 (Gemini AI)</h2>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar"></div>
+                        </div>
+                        <div id="gemini-response"></div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Incorrect Note View -->
+            <div id="incorrect-note-view" class="hidden">
+                <main>
+                    <div class="incorrect-note-header">
+                        <h2>오답노트</h2>
+                        <button id="back-to-quiz-btn">문제 풀기로 돌아가기</button>
+                    </div>
+                    <ul id="incorrect-list"></ul>
+                </main>
+            </div>
+        </div>
+
+        <footer>
+            <button id="change-api-key-btn">API 키 관리</button>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script type="module" src="js/script.js"></script>
+</body>
+</html>
