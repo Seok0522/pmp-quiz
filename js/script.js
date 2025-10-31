@@ -47,18 +47,23 @@ function showView(viewId) {
 function setApiKey(forcePrompt = false) {
     let apiKey = localStorage.getItem('geminiApiKey');
     if (forcePrompt || !apiKey) {
-        apiKey = prompt("새로운 Gemini API 키를 입력해주세요.", apiKey || "");
-        if (apiKey) {
+        apiKey = prompt("Gemini API 키를 입력해주세요. 입력된 키는 브라우저에 저장됩니다.", apiKey || "");
+        if (apiKey && apiKey.trim() !== "") {
             localStorage.setItem('geminiApiKey', apiKey);
             alert("API 키가 저장되었습니다.");
         } else {
             localStorage.removeItem('geminiApiKey');
-            alert("API 키가 제거되었습니다.");
-            return;
+            apiKey = null; // Ensure apiKey is null if cancelled or empty
+            alert("API 키 입력이 취소되었거나 유효하지 않습니다.");
         }
     }
-    if (apiKey) { genAI = new GoogleGenerativeAI(apiKey); apiKeyIsSet = true; } 
-    else { apiKeyIsSet = false; }
+    
+    if (apiKey) { 
+        genAI = new GoogleGenerativeAI(apiKey); 
+        apiKeyIsSet = true;
+    } else { 
+        apiKeyIsSet = false; 
+    }
 }
 
 function loadIncorrectAnswers() {
@@ -165,10 +170,8 @@ answersEl.addEventListener('change', e => {
 submitBtn.addEventListener('click', () => {
     const selectedRadio = answersEl.querySelector('input[name="answer"]:checked');
     if (!selectedRadio) return;
-
     const userAnswer = selectedRadio.value;
     const q = questions[currentQuestionIndex];
-
     if (userAnswer === q.answer.trim()) {
         resultMessageEl.textContent = '정답입니다!';
         resultContainerEl.className = 'result-container correct';
@@ -201,20 +204,10 @@ viewIncorrectBtn.addEventListener('click', () => {
     incorrectAnswers.sort((a,b) => a - b).forEach(qNum => {
         const questionData = questions.find(q => q.number == qNum);
         if (!questionData) return;
-        
         const koreanParsed = parseQuestionAndChoices(questionData.rawKorean);
         const snippet = koreanParsed.question.replace(/<br>/g, ' ').substring(0, 50) + '...';
-        
         const li = document.createElement('li');
-        li.innerHTML = `
-            <div class="incorrect-q-info">
-                <span class="incorrect-q-number">문제 ${qNum}</span>
-                <p class="incorrect-q-snippet">${snippet}</p>
-            </div>
-            <div class="actions">
-                <button class="retry-btn" data-qnum="${qNum}">풀기</button>
-                <button class="delete-btn" data-qnum="${qNum}">삭제</button>
-            </div>`;
+        li.innerHTML = `<div class="incorrect-q-info"><span class="incorrect-q-number">문제 ${qNum}</span><p class="incorrect-q-snippet">${snippet}</p></div><div class="actions"><button class="retry-btn" data-qnum="${qNum}">풀기</button><button class="delete-btn" data-qnum="${qNum}">삭제</button></div>`;
         incorrectListEl.appendChild(li);
     });
     showView('incorrect-note-view');
@@ -228,16 +221,20 @@ incorrectListEl.addEventListener('click', e => {
     } else if (e.target.classList.contains('delete-btn')) {
         removeIncorrectAnswer(qNum);
         e.target.closest('li').remove();
-         if (incorrectAnswers.length === 0) {
-            incorrectListEl.innerHTML = '<li>오답이 없습니다.</li>';
-        }
+         if (incorrectAnswers.length === 0) incorrectListEl.innerHTML = '<li>오답이 없습니다.</li>';
     }
 });
 
 backToQuizBtn.addEventListener('click', () => showView('quiz-view'));
 
 conceptBtn.addEventListener('click', async () => {
-    if (!apiKeyIsSet) { setApiKey(); return; }
+    if (!apiKeyIsSet) {
+        setApiKey();
+    }
+    if (!apiKeyIsSet) {
+        alert("'개념 학습하기'를 사용하려면 API 키가 필요합니다.");
+        return;
+    }
     if (isGenerating) return;
     isGenerating = true;
     geminiContainer.classList.remove('hidden');
@@ -246,16 +243,13 @@ conceptBtn.addEventListener('click', async () => {
     progressBarContainer.style.display = 'block';
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-        const prompt = `You are a PMP expert. Explain the key concepts for the following question in Korean using markdown.\n\n---\n**Question:** ${questions[currentQuestionIndex].rawKorean}\n---\n**Concepts:**`;
+        const prompt = `You are a PMP expert. Explain key concepts for the question in Korean using markdown.\n\n---\n**Question:** ${questions[currentQuestionIndex].rawKorean}\n---\n**Concepts:**`;
         const result = await model.generateContentStream(prompt);
         let aggregatedText = "", progress = 0;
         const progressInterval = setInterval(() => { if (progress < 95) progressBar.style.width = `${progress += 5}%`; }, 200);
         for await (const chunk of result.stream) {
             aggregatedText += chunk.text();
-            geminiResponseEl.innerHTML = aggregatedText
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Corrected bold parsing
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Corrected italic parsing
-                .replace(/(\r\n|\n|\r)/g, '<br>');
+            geminiResponseEl.innerHTML = aggregatedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/(\r\n|\n|\r)/g, '<br>');
         }
         clearInterval(progressInterval);
         progressBar.style.width = '100%';
@@ -271,5 +265,10 @@ conceptBtn.addEventListener('click', async () => {
 document.addEventListener('DOMContentLoaded', () => {
     loadQuestions();
     loadIncorrectAnswers();
-    setApiKey();
+    // Silently check for existing key on load, but do not prompt.
+    const existingKey = localStorage.getItem('geminiApiKey');
+    if (existingKey) {
+        genAI = new GoogleGenerativeAI(existingKey);
+        apiKeyIsSet = true;
+    }
 });
