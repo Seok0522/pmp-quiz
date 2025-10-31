@@ -127,3 +127,61 @@ footer { background-color: #f8f9fa; text-align: center; padding: 1rem; border-to
 .retry-btn { background-color: var(--primary-color); color: #fff; }
 .delete-btn { background-color: var(--danger-color); color: #fff; }
 ul { list-style: none; padding: 0; }
+
+/* --- Mobile Responsive Styles --- */
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+        align-items: flex-start;
+    }
+
+    .container {
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+    }
+
+    main {
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .question-header {
+        font-size: 1.1rem;
+    }
+
+    .question-content {
+        font-size: 1rem;
+        padding: 1rem;
+    }
+
+    .answer-choice label {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .choice-key {
+        margin-right: 0.8rem;
+    }
+
+    #submit-btn, .navigation button, .extra-features button, #back-to-quiz-btn {
+        font-size: 0.9rem;
+        padding: 0.8rem 1rem;
+    }
+
+    .navigation {
+        gap: 0.5rem;
+    }
+
+    .jump-to input {
+        width: 60px;
+        padding: 0.7rem;
+    }
+    
+    .extra-features {
+        gap: 0.5rem;
+    }
+}
