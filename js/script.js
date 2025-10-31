@@ -157,7 +157,7 @@ function resetUI() {
 answersEl.addEventListener('change', e => {
     if (e.target.name === 'answer') {
         submitBtn.disabled = false;
-        document.querySelectorAll('.answer-choice').forEach(d => d.classList.remove('selected'));
+        document.querySelectorAll('.answer-choice').forEach(d => d.classList.remove('selected', 'incorrect-choice'));
         e.target.closest('.answer-choice').classList.add('selected');
     }
 });
@@ -179,7 +179,6 @@ submitBtn.addEventListener('click', () => {
         explanationEl.innerHTML = q.explanation.replace(/\\n/g, '<br>');
         explanationContainerEl.classList.remove('hidden');
         addIncorrectAnswer(q.number);
-        // Add class to the incorrect choice
         selectedRadio.closest('.answer-choice').classList.add('incorrect-choice');
     }
     answersEl.querySelectorAll('input[name="answer"]').forEach(i => i.disabled = true);
@@ -253,7 +252,10 @@ conceptBtn.addEventListener('click', async () => {
         const progressInterval = setInterval(() => { if (progress < 95) progressBar.style.width = `${progress += 5}%`; }, 200);
         for await (const chunk of result.stream) {
             aggregatedText += chunk.text();
-            geminiResponseEl.innerHTML = aggregatedText.replace(/\*\*/g, '<strong>').replace(/\*/g, '<em>').replace(/\n/g, '<br>');
+            geminiResponseEl.innerHTML = aggregatedText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Corrected bold parsing
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Corrected italic parsing
+                .replace(/(\r\n|\n|\r)/g, '<br>');
         }
         clearInterval(progressInterval);
         progressBar.style.width = '100%';

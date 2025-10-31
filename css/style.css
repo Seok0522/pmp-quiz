@@ -91,6 +91,7 @@ main { padding: 2rem; }
 #submit-btn:disabled { background-color: #a0c7e4; cursor: not-allowed; }
 
 #result-container { margin-top: 1.5rem; padding: 1.5rem; border-radius: var(--border-radius); }
+#result-container.correct { background-color: #e9f7ea; color: var(--correct-color); }
 #result-container.incorrect { background-color: #fbe9e7; color: var(--incorrect-color); }
 
 .navigation { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
@@ -119,7 +120,7 @@ footer { background-color: #f8f9fa; text-align: center; padding: 1rem; border-to
 
 #incorrect-list { list-style: none; padding: 0; }
 #incorrect-list li { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
-.incorrect-q-info { flex-grow: 1; }
+.incorrect-q-info { flex-grow: 1; margin-right: 1rem; }
 .incorrect-q-number { font-weight: 700; display: block; margin-bottom: 0.25rem; }
 .incorrect-q-snippet { font-size: 0.9rem; color: var(--light-text-color); }
 #incorrect-list .actions button { border: none; margin-left: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 5px; cursor: pointer; }
