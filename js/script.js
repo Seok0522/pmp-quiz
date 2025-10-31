@@ -53,7 +53,7 @@ function setApiKey(forcePrompt = false) {
             alert("API 키가 저장되었습니다.");
         } else {
             localStorage.removeItem('geminiApiKey');
-            apiKey = null; // Ensure apiKey is null if cancelled or empty
+            apiKey = null;
             alert("API 키 입력이 취소되었거나 유효하지 않습니다.");
         }
     }
@@ -136,7 +136,9 @@ function renderQuestion() {
     const q = questions[currentQuestionIndex];
     const korean = parseQuestionAndChoices(q.rawKorean);
     const english = parseQuestionAndChoices(q.rawEnglish);
-    questionNumberEl.textContent = `문제 ${q.number}`;
+    
+    questionNumberEl.textContent = `문제 ${q.number} / ${questions.length}`;
+    
     questionKoreanEl.innerHTML = korean.question;
     answersEl.innerHTML = '';
     ['A', 'B', 'C', 'D'].forEach(key => {
@@ -265,7 +267,6 @@ conceptBtn.addEventListener('click', async () => {
 document.addEventListener('DOMContentLoaded', () => {
     loadQuestions();
     loadIncorrectAnswers();
-    // Silently check for existing key on load, but do not prompt.
     const existingKey = localStorage.getItem('geminiApiKey');
     if (existingKey) {
         genAI = new GoogleGenerativeAI(existingKey);

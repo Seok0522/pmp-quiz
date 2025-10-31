@@ -47,6 +47,18 @@ header {
     text-align: center;
 }
 
+.creator-contact {
+    display: block;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    text-decoration: none;
+    margin-top: 0.25rem;
+}
+.creator-contact:hover {
+    color: #fff;
+}
+
+
 main { padding: 2rem; }
 .quiz-container { margin-bottom: 2rem; }
 
